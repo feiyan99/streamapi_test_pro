@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -17,14 +18,14 @@ public class StreamAPI_入门 {
     @Test
     public void forEachTest() {
         // 使用Stream.forEach()迭代
-        stream.forEach(str -> System.out.println(str));
+        stream.forEach(System.out::println);
     }
 
     @Test
     public void filterTest() {
         // 保留长度等于3的字符串
         stream.filter(str -> str.length()==3)
-                .forEach(str -> System.out.println(str));
+                .forEach(System.out::println);
     }
 
     /*
@@ -34,8 +35,8 @@ public class StreamAPI_入门 {
      */
     @Test
     public void sortedTest() {
-        stream.sorted((str1, str2) -> str1.length()-str2.length())
-                .forEach(str -> System.out.println(str));
+        stream.sorted(Comparator.comparingInt(String::length))
+                .forEach(System.out::println);
     }
 
     /*
@@ -45,7 +46,7 @@ public class StreamAPI_入门 {
     public void distinctTest() {
         Stream<String> stream= Stream.of("I", "love", "you", "too", "too");
         stream.distinct()
-                .forEach(str -> System.out.println(str));
+                .forEach(System.out::println);
     }
 
     /*
@@ -57,7 +58,7 @@ public class StreamAPI_入门 {
     @Test
     public void mapTest() {
         stream.map(str -> str.toUpperCase()) // 转大写
-                .forEach(str -> System.out.println(str));
+                .forEach(System.out::println);
     }
 
     /*
@@ -83,4 +84,5 @@ public class StreamAPI_入门 {
         List<Integer> result = outer.stream().flatMap(inner -> inner.stream().map(i -> i + 2)).collect(toList());
         result.forEach(System.out::print);
     }
+
 }

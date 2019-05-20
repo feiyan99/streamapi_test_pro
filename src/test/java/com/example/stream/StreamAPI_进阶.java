@@ -8,13 +8,14 @@ import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 //@RunWith(SpringRunner.class)
 @SpringBootTest
@@ -22,6 +23,7 @@ public class StreamAPI_进阶 {
     Stream<String> stream = Stream.of("I", "love", "you", "too");
 
     final int PASS_THRESHOLD = 18;
+    final Consumer<Map.Entry> MAP_FORMAT_PRINT = (Map.Entry e) -> Console.log("k[{}] v[{}]", e.getKey(), e.getValue());
 
     /*
         reduce操作可以实现从一组元素中生成一个值，sum()、max()、min()、count()等都是reduce操作，
@@ -86,25 +88,57 @@ public class StreamAPI_进阶 {
         ArrayList<Student> students = getStudents();
         students.stream()
                 .collect(toMap(s -> s.getId(), identity())) // 转换map 指定生成key的方式， 指定生成value的方式
-                .entrySet().forEach(e -> Console.log("k[{}] v[{}]", e.getKey(), e.getValue()));
+                .entrySet().forEach(MAP_FORMAT_PRINT);
     }
 
+    /*
+        使用partitioningBy()生成的收集器，
+        这种情况适用于将Stream中的元素依据某个二值逻辑（满足条件，或不满足）分成互补相交的两部分，比如男女性别、成绩及格与否等。
+     */
     @Test
     public void collectTest2() {
         ArrayList<Student> students = getStudents();
-        students.stream()
-                .collect(Collectors.partitioningBy(s -> s.getAge() >= PASS_THRESHOLD))
-                .entrySet().forEach( e -> Console.log("k[{}] v[{}]", e.getKey(), e.getValue()));
+        students.stream()                         // 分区 定义条件
+                .collect(partitioningBy(s -> s.getAge() >= PASS_THRESHOLD))
+                .entrySet().forEach(MAP_FORMAT_PRINT);
     }
 
 
+    /*
+        使用groupingBy()生成的收集器，这是比较灵活的一种情况。
+        跟SQL中的group by语句类似，这里的groupingBy()也是按照某个属性对数据进行分组，
+        属性相同的元素会被对应到Map的同一个key上。下列代码展示将员工按照部门进行分组
+     */
+    @Test
+    public void collectTest3() {
+        ArrayList<Student> students = getStudents();
+        students.stream()                         // 分组条件 类似 group by
+                .collect(groupingBy(Student::getAge))
+                .entrySet().forEach(MAP_FORMAT_PRINT);
+    }
+
+    /*
+        Test3只是分组的最基本用法，有些时候仅仅分组是不够的。
+        在SQL中使用group by是为了协助其他查询，比如
+        1. 先将员工按照部门分组，2. 然后统计每个部门员工的人数。
+        Java类库设计者也考虑到了这种情况，增强版的groupingBy()能够满足这种需求。
+        增强版的groupingBy()允许我们对元素分组之后再执行某种运算，
+        比如求和、计数、平均值、类型转换等。这种先将元素分组的收集器叫做上游收集器，
+        之后执行其他运算的收集器叫做下游收集器(downstream Collector)。
+     */
+    @Test
+    public void collectTest4() {
+        ArrayList<Student> students = getStudents();
+        students.stream()                         // 分组条件 类似 group by
+                .collect(groupingBy(Student::getAge, counting()))
+                .entrySet().forEach(MAP_FORMAT_PRINT);
+    }
 
     private ArrayList<Student> getStudents() {
         Student s1 = new Student(UUID.randomUUID().toString(),"张三", 16);
         Student s2 = new Student(UUID.randomUUID().toString(),"李四", 17);
         Student s3 = new Student(UUID.randomUUID().toString(),"王五", 18);
         Student s4 = new Student(UUID.randomUUID().toString(),"薛二麻子", 19);
-
         return CollUtil.newArrayList(s1, s2, s3, s4);
     }
 
